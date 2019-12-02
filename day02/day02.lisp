@@ -1,0 +1,23 @@
+(ql:quickload "str")
+
+(defparameter *input-file* #P"input.txt")
+(defparameter *input* (uiop:read-file-string *input-file*))
+
+(defun execute-program (program)
+  (loop for i = 0 then (+ 4 i)
+     thereis (= 99 (aref program i))
+     do (let ((instruction-code (aref program i))
+	      (x (aref program (aref program (+ 1 i))))
+	      (y (aref program (aref program (+ 2 i))))
+	      (z (aref program (+ 3 i))))
+	  (cond ((= instruction-code 1)
+		 (setf (aref program z) (+ x y)))
+		((= instruction-code 2)
+		 (setf (aref program z) (* x y))))))
+  program)
+
+(defun part1 (program-string)
+  (let ((program (map 'vector #'parse-integer (str:split "," program-string))))
+    (setf (aref program 1) 12)
+    (setf (aref program 2) 2)
+    (execute-program program)))
