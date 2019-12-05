@@ -1,5 +1,3 @@
-(ql:quickload "str")
-
 (defparameter *input-file* #P"input.txt")
 (defparameter *input* (uiop:read-file-string *input-file*))
 
@@ -62,7 +60,7 @@
   (execute-instruction 0 inputs nil))
 
 (defun parse-program (program-string)
-  (map 'vector #'parse-integer (str:split "," program-string)))
+  (map 'vector #'parse-integer (uiop:split-string program-string :separator ",")))
 
 (defun part1 ()
   (car (nth-value 1 (execute (parse-program *input*) '(1)))))
