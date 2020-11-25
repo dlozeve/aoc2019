@@ -46,3 +46,19 @@
 (define (part1 filename)
   (define moons (read-input filename))
   (total-energy (for/fold ([ms moons]) ([i (in-range 1000)]) (step ms))))
+
+(define (cycle-length moons pos speed)
+  (define-values (states final)
+    (for/fold ([states (mutable-set)] [ms moons])
+              ([_ (in-naturals)]
+               #:break (set-member? states (append (map pos ms) (map speed ms))))
+      (set-add! states (append (map pos ms) (map speed ms)))
+      (values states (step ms))))
+  (set-count states))
+
+(define (part2 filename)
+  (define moons (read-input filename))
+  (define cycle-x (cycle-length moons moon-x moon-vx))
+  (define cycle-y (cycle-length moons moon-y moon-vy))
+  (define cycle-z (cycle-length moons moon-z moon-vz))
+  (lcm cycle-x cycle-y cycle-z))
