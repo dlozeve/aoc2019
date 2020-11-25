@@ -77,3 +77,41 @@
   (displayln "Part 1 (better):")
   (time (shuffle-card 10007 instructions 2019)))
 
+(define (deal-card-inv deck-size card)
+  (- (sub1 deck-size) card))
+
+(define (cut-card-inv deck-size n card)
+  (modulo (+ card n) deck-size))
+
+(define (increment-card-inv deck-size n card)
+  (remainder (* card (modular-inverse n deck-size)) deck-size))
+
+(define (execute-card-inv deck-size instruction card)
+  (match instruction
+    ['deal (deal-card-inv deck-size card)]
+    [(list 'cut n) (cut-card-inv deck-size n card)]
+    [(list 'increment n) (increment-card-inv deck-size n card)]))
+
+(define (shuffle-card-inv deck-size reversed-instructions card)
+  (for/fold ([c card]) ([i reversed-instructions])
+    (execute-card-inv deck-size i c)))
+
+(module+ main
+  (displayln "Part 2:")
+  (define deck-size 119315717514047)
+  (define iterations 101741582076661)
+
+  ;; Operations are linear, we find the coefficients and apply them directly
+  (define x 2020)
+  (define y (shuffle-card-inv deck-size (reverse instructions) x))
+  (define z (shuffle-card-inv deck-size (reverse instructions) y))
+
+  (define a (modulo (* (- z y) (modular-inverse (- y x) deck-size)) deck-size))
+  (define b (modulo (- y (* a x)) deck-size))
+
+  (modulo (+ (* (modular-expt a iterations deck-size)
+                x)
+             (* (sub1 (modular-expt a iterations deck-size))
+                (modular-inverse (sub1 a) deck-size)
+                b))
+          deck-size))
