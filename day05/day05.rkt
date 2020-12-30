@@ -7,7 +7,7 @@
 
 (define (part1 filename)
   (define program (parse-file filename))
-  (define-values (p in out r) (execute program '(1)))
+  (define-values (p pc relbase out r) (execute program '(1)))
   (car out))
 
 (module+ test
@@ -15,7 +15,7 @@
 
 (define (part2 filename)
   (define program (parse-file filename))
-  (define-values (p in out r) (execute program '(5)))
+  (define-values (p pc relbase out r) (execute program '(5)))
   (car out))
 
 (module+ test

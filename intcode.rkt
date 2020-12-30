@@ -61,41 +61,41 @@
 
   (instruction name parameter-modes inparams outparams))
 
-(define (execute program inputs [pc 0])
+(define (execute program inputs [pc 0] [relative-base 0])
   (define p (make-vector 10000 0))
   (vector-copy! p 0 program)
 
   (let loop ([pc pc]
+             [relative-base relative-base]
              [inputs inputs]
-             [outputs '()]
-             [relative-base 0])
+             [outputs '()])
     (define instr (parse-instruction p pc relative-base))
     (define inparams (instruction-inparams instr))
     (define outparams (instruction-outparams instr))
     (define next-pc (+ pc (length inparams) (length outparams) 1))
     
     (match (instruction-name instr)
-      ['terminate (values p pc outputs #t)]
+      ['terminate (values p pc relative-base outputs #t)]
       ['add (vector-set! p (car outparams) (apply + inparams))
-            (loop next-pc inputs outputs relative-base)]
+            (loop next-pc relative-base inputs outputs)]
       ['mul (vector-set! p (car outparams) (apply * inparams))
-            (loop next-pc inputs outputs relative-base)]
+            (loop next-pc relative-base inputs outputs)]
       ['input (if (empty? inputs)
-                  (values p pc outputs #f)
+                  (values p pc relative-base outputs #f)
                   (begin
                     (vector-set! p (car outparams) (car inputs))
-                    (loop next-pc (cdr inputs) outputs relative-base)))]
-      ['output (loop next-pc inputs (cons (car inparams) outputs) relative-base)]
+                    (loop next-pc relative-base (cdr inputs) outputs)))]
+      ['output (loop next-pc relative-base inputs (cons (car inparams) outputs))]
       ['jmpt (if (not (= 0 (car inparams)))
-                 (loop (cadr inparams) inputs outputs relative-base)
-                 (loop next-pc inputs outputs relative-base))]
+                 (loop (cadr inparams) relative-base inputs outputs)
+                 (loop next-pc relative-base inputs outputs))]
       ['jmpf (if (= 0 (car inparams))
-                 (loop (cadr inparams) inputs outputs relative-base)
-                 (loop next-pc inputs outputs relative-base))]
+                 (loop (cadr inparams) relative-base inputs outputs)
+                 (loop next-pc relative-base inputs outputs))]
       ['lt (vector-set! p (car outparams)
                         (if (< (car inparams) (cadr inparams)) 1 0))
-           (loop next-pc inputs outputs relative-base)]
+           (loop next-pc relative-base inputs outputs)]
       ['eq (vector-set! p (car outparams)
                         (if (= (car inparams) (cadr inparams)) 1 0))
-           (loop next-pc inputs outputs relative-base)]
-      ['rel (loop next-pc inputs outputs (+ relative-base (car inparams)))])))
+           (loop next-pc relative-base inputs outputs)]
+      ['rel (loop next-pc (+ relative-base (car inparams)) inputs outputs)])))

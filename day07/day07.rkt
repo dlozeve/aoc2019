@@ -10,7 +10,7 @@
          (for/list ([phases (in-permutations (range 5))])
            (for/fold ([signal 0])
                      ([phase (in-list phases)])
-             (define-values (p in out r) (execute program (list phase signal)))
+             (define-values (p pc relbase out r) (execute program (list phase signal)))
              (car out)))))
 
 (module+ test
@@ -26,7 +26,7 @@
     (for/list ([phases (in-permutations (range 5 10))])
       (define amplifiers
         (for/list ([phase (in-list phases)])
-          (define-values (amp pc outputs r) (execute program (list phase) 0))
+          (define-values (amp pc relbase outputs r) (execute program (list phase) 0))
           (list amp pc)))
       (let loop ([signal 0]
                  [amplifiers amplifiers])
@@ -34,7 +34,7 @@
             signal
             (let*-values ([(amp) (car (car amplifiers))]
                           [(pc) (cadr (car amplifiers))]
-                          [(new-amp new-pc outputs terminated) (execute amp (list signal) pc)]
+                          [(new-amp new-pc new-relbase outputs terminated) (execute amp (list signal) pc)]
                           [(new-amplifiers) (if terminated
                                                 (cdr amplifiers)
                                                 (append (cdr amplifiers) (list (list new-amp new-pc))))])
