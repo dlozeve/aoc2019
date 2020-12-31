@@ -10,8 +10,8 @@
          (for/list ([phases (in-permutations (range 5))])
            (for/fold ([signal 0])
                      ([phase (in-list phases)])
-             (define-values (p pc relbase out r) (execute program (list phase signal)))
-             (car out)))))
+             (define vm (execute (start-machine program (list phase signal))))
+             (car (machine-outputs vm))))))
 
 (module+ test
   (check-equal? (part1 (parse "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0")) 43210)
@@ -26,19 +26,19 @@
     (for/list ([phases (in-permutations (range 5 10))])
       (define amplifiers
         (for/list ([phase (in-list phases)])
-          (define-values (amp pc relbase outputs r) (execute program (list phase) 0))
-          (list amp pc)))
+          (define vm (execute (start-machine program (list phase))))
+          vm))
       (let loop ([signal 0]
                  [amplifiers amplifiers])
         (if (empty? amplifiers)
             signal
-            (let*-values ([(amp) (car (car amplifiers))]
-                          [(pc) (cadr (car amplifiers))]
-                          [(new-amp new-pc new-relbase outputs terminated) (execute amp (list signal) pc)]
-                          [(new-amplifiers) (if terminated
-                                                (cdr amplifiers)
-                                                (append (cdr amplifiers) (list (list new-amp new-pc))))])
-              (loop (car outputs) new-amplifiers))))))
+            (let* ([amp (machine-program (car amplifiers))]
+                   [pc (machine-pc (car amplifiers))]
+                   [new-vm (execute (machine amp (list signal) pc 0 #f '()))]
+                   [new-amplifiers (if (machine-terminated new-vm)
+                                       (cdr amplifiers)
+                                       (append (cdr amplifiers) (list new-vm)))])
+              (loop (car (machine-outputs new-vm)) new-amplifiers))))))
   (apply max signals))
 
 (module+ test

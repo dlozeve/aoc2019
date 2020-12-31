@@ -6,10 +6,10 @@
   (require rackunit))
 
 (define (part1 program)
-  (define-values (p pc relbase out r) (execute program '()))
+  (define vm (execute (start-machine program '())))
   (define screen
     (let loop ([screen (hash)]
-               [instructions (reverse out)])
+               [instructions (reverse (machine-outputs vm))])
       (if (empty? instructions)
           screen
           (let ([x (car instructions)]
@@ -50,25 +50,23 @@
 
 (define (part2 program)
   (vector-set! program 0 2)
-  (define-values (p pc relbase out r) (execute program '()))
+  (define vm (execute (start-machine program '())))
   (define screen
-    (let loop ([p p]
-               [pc pc]
-               [relbase relbase]
-               [out out]
+    (let loop ([vm vm]
                [screen (hash)])
-      (define new-screen (draw-screen screen (reverse out)))
+      (define new-screen (draw-screen screen (reverse (machine-outputs vm))))
       (define ball-pos (ball-x new-screen))
       (define paddle-pos (paddle-x new-screen))
       (define joystick (cond
                          [(< ball-pos paddle-pos) -1]
                          [(= ball-pos paddle-pos) 0]
                          [(> ball-pos paddle-pos) 1]))
-      (define-values (new-p new-pc new-relbase new-out terminated)
-        (execute p (list joystick) pc relbase))
+      (define new-vm
+        (execute (machine (machine-program vm) (list joystick)
+                          (machine-pc vm) (machine-relative-base vm) #f '())))
       (if (= 0 (block-count new-screen))
           new-screen
-          (loop new-p new-pc new-relbase new-out new-screen))))
+          (loop new-vm new-screen))))
   (hash-ref screen (list -1 0)))
 
 (module+ test

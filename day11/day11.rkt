@@ -6,25 +6,28 @@
   (require rackunit))
 
 (define (part12 program start-panel [show-grid #f])
-  (define-values (p pc relbase out r) (execute program '()))
+  (define vm (execute (start-machine program '())))
   (define grid (make-hash))
   (hash-set! grid 0 start-panel)
   (define painted (mutable-set))
-  (let loop ([p p]
-             [pc pc]
-             [relbase relbase]
+  (let loop ([vm vm]
              [direction 0+1i]
              [position 0])
-    (define-values (new-p new-pc new-relbase out terminated)
-      (execute p (list (hash-ref grid position 0)) pc relbase))
-    (unless terminated
-      (hash-set! grid position (cadr out))
+    (define new-vm
+      (execute (machine (machine-program vm)
+                        (list (hash-ref grid position 0))
+                        (machine-pc vm)
+                        (machine-relative-base vm)
+                        #f
+                        '())))
+    (unless (machine-terminated new-vm)
+      (hash-set! grid position (cadr (machine-outputs new-vm)))
       (set-add! painted position)
-      (define new-direction (if (= 0 (car out))
+      (define new-direction (if (= 0 (car (machine-outputs new-vm)))
                                 (* direction 0+1i)
                                 (* direction 0-1i)))
       (define new-position (+ position new-direction))
-      (loop new-p new-pc new-relbase new-direction new-position)))
+      (loop new-vm new-direction new-position)))
   (when show-grid
     (display-grid grid))
   (set-count painted))

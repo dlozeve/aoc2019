@@ -9,8 +9,8 @@
   (define program (parse-file filename))
   (vector-set! program 1 12)
   (vector-set! program 2 2)
-  (define-values (p pc relbase out r) (execute program '()))
-  (vector-ref p 0))
+  (define vm (execute (start-machine program '())))
+  (vector-ref (machine-program vm) 0))
 
 (module+ test
   (check-equal? (part1 "input.txt") 6627023))
@@ -19,8 +19,8 @@
   (define my-program (vector-copy program))
   (vector-set! my-program 1 noun)
   (vector-set! my-program 2 verb)
-  (define-values (p pc relbase out r) (execute my-program '()))
-  (vector-ref p 0))
+  (define vm (execute (start-machine my-program '())))
+  (vector-ref (machine-program vm) 0))
 
 (define (part2 filename)
   (define program (parse-file filename))

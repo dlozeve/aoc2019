@@ -2,6 +2,8 @@
 
 (provide parse
          parse-file
+         (struct-out machine)
+         start-machine
          execute)
 
 (define (parse str)
@@ -61,27 +63,39 @@
 
   (instruction name parameter-modes inparams outparams))
 
-(define (execute program inputs [pc 0] [relative-base 0])
-  (define p (make-vector 10000 0))
-  (vector-copy! p 0 program)
+(struct machine
+  (program
+   inputs
+   pc
+   relative-base
+   terminated
+   outputs)
+  #:transparent)
 
-  (let loop ([pc pc]
-             [relative-base relative-base]
-             [inputs inputs]
-             [outputs '()])
+(define (start-machine program inputs)
+  (machine program inputs 0 0 #f '()))
+
+(define (execute vm)
+  (define p (make-vector 10000 0))
+  (vector-copy! p 0 (machine-program vm))
+
+  (let loop ([pc (machine-pc vm)]
+             [relative-base (machine-relative-base vm)]
+             [inputs (machine-inputs vm)]
+             [outputs (machine-outputs vm)])
     (define instr (parse-instruction p pc relative-base))
     (define inparams (instruction-inparams instr))
     (define outparams (instruction-outparams instr))
     (define next-pc (+ pc (length inparams) (length outparams) 1))
     
     (match (instruction-name instr)
-      ['terminate (values p pc relative-base outputs #t)]
+      ['terminate (machine p inputs pc relative-base #t outputs)]
       ['add (vector-set! p (car outparams) (apply + inparams))
             (loop next-pc relative-base inputs outputs)]
       ['mul (vector-set! p (car outparams) (apply * inparams))
             (loop next-pc relative-base inputs outputs)]
       ['input (if (empty? inputs)
-                  (values p pc relative-base outputs #f)
+                  (machine p inputs pc relative-base #f outputs)
                   (begin
                     (vector-set! p (car outparams) (car inputs))
                     (loop next-pc relative-base (cdr inputs) outputs)))]
