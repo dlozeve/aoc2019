@@ -7,7 +7,7 @@
 
 (define (get-grid program)
   (define vm (execute (start-machine program '())))
-  (define map-str (list->string (map integer->char (reverse (machine-outputs vm)))))
+  (define map-str (list->ascii (reverse (machine-outputs vm))))
   (define-values (grid robot-pos robot-dir pos)
     (for/fold ([grid (set)]
                [robot-pos #f]
@@ -68,14 +68,12 @@
   (define (prefixes lst)
     (for/list ([size (in-range 2 10 2)])
       (take lst size)))
-
   (define possibilities
     (for*/list ([a (in-list (prefixes path))]
                 [b (in-list (prefixes (remove-substring path a)))]
                 [c (in-list (prefixes (remove-substring (remove-substring path a) b)))]
                 #:when (empty? (remove-substring (remove-substring (remove-substring path a) b) c)))
       (list a b c)))
-  
   (for/last ([poss (in-list possibilities)])
     (match-define (list a b c) poss)
     (define result (let loop ([lst path])
@@ -94,10 +92,9 @@
 (define (part2 program)
   (define-values (map-str grid robot-pos robot-dir) (get-grid program))
   (define path (get-path grid robot-pos robot-dir))
-  (define movement-rules (map (λ (p) (string-append (lst->str p) "\n")) (compress path)))
-  (define inputs (map char->integer (string->list (string-join movement-rules ""))))
+  (define inputs (string-join (append (map lst->str (compress path)) '("n\n")) "\n"))
   (vector-set! program 0 2)
-  (define vm (execute (start-machine program (append inputs '(110 10)))))
+  (define vm (execute (start-machine program inputs)))
   (car (machine-outputs vm)))
 
 (module+ test

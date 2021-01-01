@@ -4,13 +4,23 @@
          parse-file
          (struct-out machine)
          start-machine
+         ascii->list
+         list->ascii
          execute)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                                Program I/O                                  ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (parse str)
   (list->vector (map string->number (map string-trim (string-split str ",")))))
 
 (define (parse-file filename)
   (parse (string-trim (file->string filename))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                                Instructions                                 ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (struct instruction
   (name
@@ -63,6 +73,10 @@
 
   (instruction name parameter-modes inparams outparams))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                          Virtual machine interfaces                         ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (struct machine
   (program
    inputs
@@ -70,10 +84,34 @@
    relative-base
    terminated
    outputs)
-  #:transparent)
+  #:transparent
+  #:guard (lambda (program inputs pc relative-base terminated outputs name)
+            (when (not (<= 0 pc (vector-length program)))
+              (error "invalid program counter" pc))
+            (values program
+                    (preprocess-inputs inputs)
+                    pc
+                    relative-base
+                    terminated outputs)))
 
 (define (start-machine program inputs)
   (machine program inputs 0 0 #f '()))
+
+(define (ascii->list str)
+  (map char->integer (string->list str)))
+
+(define (list->ascii lst)
+  (list->string (map integer->char lst)))
+
+(define (preprocess-inputs inputs)
+  (cond
+    [(list? inputs) inputs]
+    [(string? inputs) (ascii->list inputs)]
+    [else (error "unsupported input type: " inputs)]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;                          Virtual machine execution                          ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (execute vm)
   (define p (make-vector 10000 0))
