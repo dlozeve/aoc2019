@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 (provide parse
          parse-file
@@ -7,6 +7,11 @@
          ascii->list
          list->ascii
          execute)
+
+(require racket/list
+         racket/string
+         racket/file
+         racket/match)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;                                Program I/O                                  ;

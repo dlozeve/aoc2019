@@ -1,6 +1,8 @@
-#lang racket
+#lang racket/base
 
-(require "../intcode.rkt")
+(require "../intcode.rkt"
+         racket/match
+         racket/list)
 
 (module+ test
   (require rackunit))

@@ -1,6 +1,7 @@
-#lang racket
+#lang racket/base
 
-(require "../intcode.rkt")
+(require "../intcode.rkt"
+         racket/vector)
 
 (module+ test
   (require rackunit))

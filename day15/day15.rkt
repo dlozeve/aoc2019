@@ -1,6 +1,8 @@
-#lang racket
+#lang racket/base
 
 (require racket/random
+         racket/list
+         racket/match
          graph
          "../intcode.rkt")
 
