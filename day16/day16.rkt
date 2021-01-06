@@ -5,9 +5,6 @@
 (module+ test
   (require rackunit))
 
-(module+ main
-  (displayln "Day 16"))
-
 (define (pattern n i)
   (define index (remainder (add1 i) (* 4 n)))
   (cond
@@ -20,10 +17,10 @@
   (abs (remainder n 10)))
 
 (define (phase signal)
-  (for/vector #:length (vector-length signal)
-      ([i (in-range (vector-length signal))])
-    (last-digit (for/sum ([d (in-vector signal i)]
-                          [j (in-naturals i)])
+  (for/list ([i (in-range (length signal))])
+    (last-digit (for/sum ([d (in-list signal)]
+                          [j (in-naturals)]
+                          #:when (>= j i))
                   (* d (pattern (add1 i) j))))))
 
 (define (number->digits n)
@@ -32,10 +29,10 @@
     (if (> q 0)
         (cons r (aux q))
         (list r)))
-  (list->vector (reverse (aux n))))
+  (reverse (aux n)))
 
-(define (digits->number vec)
-  (for/sum ([d (in-vector vec (sub1 (vector-length vec)) -1 -1)]
+(define (digits->number lst)
+  (for/sum ([d (in-list (reverse lst))]
             [i (in-naturals)])
     (* d (expt 10 i))))
 
@@ -44,7 +41,7 @@
     (f val)))
 
 (define (part1 n)
-  (digits->number (vector-take (apply-n-times phase 100 n) 8)))
+  (digits->number (take (apply-n-times phase 100 n) 8)))
 
 (module+ test
   (check-eq? (part1 (number->digits 80871224585914546619083218645595)) 24176176)
@@ -52,9 +49,25 @@
   (check-eq? (part1 (number->digits 69317163492948606335995924319873)) 52432133))
 
 (module+ main
-  (display "Part 1: ")
   (define input (number->digits
                  (string->number
                   (string-trim
                    (port->string (open-input-file "input") #:close? #t)))))
   (displayln (part1 input)))
+
+(define (phase2 signal)
+  (define-values (s res)
+    (for/fold ([s (apply + signal)]
+               [res '()])
+              ([d (in-list signal)])
+      (values (- s d) (cons (last-digit s) res))))
+  (reverse res))
+
+(define (part2 input)
+  (define offset (digits->number (take input 7)))
+  (define n (drop input offset))
+  (digits->number (take (apply-n-times phase2 100 n) 8)))
+
+(module+ main
+  (define input2 (flatten (make-list 10000 input)))
+  (displayln (part2 input2)))
